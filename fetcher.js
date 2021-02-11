@@ -1,23 +1,37 @@
-// small CLI app takes in a URL as process.argv as well as a local path and downlaod the resource to specified path
-//user input
-const input = process.argv.slice(2);
-const url = input[0];
-const destination = input[1];
+const fs = require('fs');
+const request = require('request');
+const readline = require('readline');
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout
+});
 
-console.log(url + ' ' + destination)
+const args = process.argv.slice(2);
+const url = args[0];
+const filename = args[1];
 
+request(url, (error, response, body) => {
+  console.log(`Requested: ${url}`);
+  console.log('error:', error);
+  console.log('statusCode:', response && response.statusCode);
 
-//use request library to make HTTP request
-// const request = require('request');
-
-// request('https://www.google.com/fdsafsafsa.html', (error, response, body) => {
-//   console.log('error:', error); // Print the error if one occurred
-//   console.log('statusCode:', response && response.statusCode); // Print the response status code if a response was received
-//   console.log('body:', body); // Print the HTML for the Google homepage.
-// });
-
-// Node's fs module to write the file
-
-// Do not use the pipe function
-
-// Do not use writeFileSync function
+  if (!fs.existsSync(filename)) {
+    fs.writeFile(filename, body, (err) => {
+      if (err) throw err;
+      // const stats = fs.statSync(filename)
+      console.log(`Downloaded and saved ${body.length} bytes to ${filename}`)// not working
+    })
+  } else {
+    rl.question('This file already exists... would you like to overwrite y/n?', answer => {
+      if (answer === 'y') {
+        fs.writeFile(filename, body, (err) => {
+          if (err) throw err;
+          console.log(`Downloaded and saved ${body.length} bytes to ${filename}`)// not working
+        });
+      } else {
+        console.log('Try a different directory then')
+      }
+      rl.close();
+    });
+  }
+});
